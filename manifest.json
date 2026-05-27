@@ -1,22 +1,21 @@
 {
-  "name": "我们的专属空间",
-  "short_name": "专属空间",
-  "description": "属于两个人的甜蜜回忆录",
+  "name": "小纸条",
+  "short_name": "note",
+  "description": "专属我们的私密情感空间",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f3e8ff",
-  "theme_color": "#7c3aed",
-  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#f43f5e",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192.png?text=💜",
+      "src": "https://api.iconify.design/ph/heart-fill.svg?color=%23f43f5e&width=192&height=192",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml"
     },
     {
-      "src": "https://via.placeholder.com/512x512.png?text=💜",
+      "src": "https://api.iconify.design/ph/heart-fill.svg?color=%23f43f5e&width=512&height=512",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml"
     }
   ]
 }
