@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖 我们的小星球</title>
+    <!-- 引入 Tailwind CSS 快速美化 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入图标库 -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* 玻璃拟态效果 */
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 左侧：头部与倒计时 -->
+        <div class="lg:col-span-3 glass p-6 flex flex-wrap justify-between items-center text-white">
+            <div>
+                <h1 class="text-3xl font-bold">💖 我们的小星球</h1>
+                <p class="opacity-80">记录每一个甜蜜瞬间</p>
+            </div>
+            <div class="text-right mt-4 lg:mt-0">
+                <p class="text-lg">我们在壹起</p>
+                <p id="loveDays" class="text-4xl font-bold">-- 天</p>
+            </div>
+        </div>
+
+        <!-- 中间：留言墙 (非即时通讯) -->
+        <div class="lg:col-span-2 glass p-6 h-[500px] flex flex-col">
+            <h2 class="text-2xl font-bold text-white mb-4"><i class="ri-chat-3-line"></i> 悄悄话留言板</h2>
+            <div id="messages" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                <!-- 默认留言 -->
+                <div class="bg-white/20 p-3 rounded-xl max-w-xs self-start">
+                    <p class="text-white">记得早点睡哦，晚安！❤️</p>
+                    <span class="text-xs text-white/70">昨天 23:01</span>
+                </div>
+                <div class="bg-pink-500/40 p-3 rounded-xl max-w-xs self-end ml-auto">
+                    <p class="text-white">收到！你也一样，梦里见～</p>
+                    <span class="text-xs text-white/70">昨天 23:05</span>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <input id="msgInput" type="text" placeholder="写下你想说的话..." class="flex-1 bg-white/20 rounded-full px-4 py-2 text-white placeholder:text-white/60 focus:outline-none">
+                <button onclick="sendMsg()" class="bg-pink-500 hover:bg-pink-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition">➤</button>
+            </div>
+        </div>
+
+        <!-- 右侧：功能栏 -->
+        <div class="space-y-6">
+            <!-- 倒数日 -->
+            <div class="glass p-6 text-white">
+                <h2 class="text-xl font-bold mb-2"><i class="ri-calendar-event-line"></i> 纪念日倒数</h2>
+                <p>距离我们的周年纪念还有：</p>
+                <p id="countdown" class="text-3xl font-bold text-center py-2">-- 天</p>
+                <input type="date" id="anniversaryDate" value="2025-12-31" onchange="calcCountdown()" class="mt-2 w-full bg-white/20 rounded-lg p-2 text-white">
+            </div>
+
+            <!-- 愿望清单 -->
+            <div class="glass p-6 text-white">
+                <h2 class="text-xl font-bold mb-2"><i class="ri-checkbox-circle-line"></i> 愿望清单</h2>
+                <div id="wishList" class="space-y-2 mb-3">
+                    <div class="flex items-center"><input type="checkbox" checked class="mr-2 accent-pink-500"><span class="line-through opacity-70">一起去海边看日出</span></div>
+                    <div class="flex items-center"><input type="checkbox" class="mr-2 accent-pink-500"><span>吃一家超棒的火锅</span></div>
+                </div>
+                <div class="flex gap-2">
+                    <input id="wishInput" type="text" placeholder="添加愿望..." class="flex-1 bg-white/20 rounded-lg px-3 py-1 text-sm">
+                    <button onclick="addWish()" class="text-sm bg-white/30 px-3 py-1 rounded-lg">添加</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：时间轴 -->
+        <div class="lg:col-span-3 glass p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4"><i class="ri-time-line"></i> 我们的时间轴</h2>
+            <div class="relative border-l-2 border-white/30 pl-6 space-y-6">
+                <div class="relative">
+                    <div class="absolute -left-[34px] top-1 w-4 h-4 bg-pink-500 rounded-full"></div>
+                    <p class="font-bold">2024年3月</p>
+                    <p class="opacity-80">在这个月，我们决定一起写代码。</p>
+                </div>
+                <div class="relative">
+                    <div class="absolute -left-[34px] top-1 w-4 h-4 bg-purple-500 rounded-full"></div>
+                    <p class="font-bold">2024年1月</p>
+                    <p class="opacity-80">第一次一起跨年，烟花真好看。</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 计算在一起的天数
+        const startDate = new Date('2024-01-01'); // 在这里修改你们的开始日期
+        function calcLoveDays() {
+            const today = new Date();
+            const diffTime = Math.abs(today - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            document.getElementById('loveDays').innerText = diffDays + ' 天';
+        }
+
+        // 计算倒数日
+        function calcCountdown() {
+            const targetDate = new Date(document.getElementById('anniversaryDate').value);
+            const today = new Date();
+            const diffTime = targetDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            document.getElementById('countdown').innerText = diffDays > 0 ? diffDays + ' 天' : '就是今天！';
+        }
+
+        // 发送留言
+        function sendMsg() {
+            const input = document.getElementById('msgInput');
+            if (input.value.trim() === '') return;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'bg-pink-500/40 p-3 rounded-xl max-w-xs self-end ml-auto';
+            msgDiv.innerHTML = `<p class="text-white">${input.value}</p><span class="text-xs text-white/70">刚刚</span>`;
+            
+            document.getElementById('messages').appendChild(msgDiv);
+            input.value = '';
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        }
+
+        // 添加愿望
+        function addWish() {
+            const input = document.getElementById('wishInput');
+            if (input.value.trim() === '') return;
+            
+            const wishDiv = document.createElement('div');
+            wishDiv.className = 'flex items-center';
+            wishDiv.innerHTML = `<input type="checkbox" class="mr-2 accent-pink-500"><span>${input.value}</span>`;
+            
+            document.getElementById('wishList').appendChild(wishDiv);
+            input.value = '';
+        }
+
+        // 初始化
+        calcLoveDays();
+        calcCountdown();
+    </script>
+</body>
+</html>
