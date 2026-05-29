@@ -3,36 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我们的数字小窝</title>
-    <!-- 引入 PWA 配置文件 -->
+    <title>情侣数字小窝</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#f43f5e">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://api.iconify.design/ph/heart-fill.svg?color=%23f43f5e&width=180&height=180">
-
+    
     <!-- 引入 Tailwind CSS 进行页面美化 -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- 配置浏览器 ES Module 引入规则 -->
-<script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@18.2.0",
-      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-      "lucide-react": "https://esm.sh/lucide-react@0.263.0",
-      "firebase/app": "https://esm.sh/firebase@10.5.0/app",
-      "firebase/auth": "https://esm.sh/firebase@10.5.0/auth",
-      "firebase/firestore": "https://esm.sh/firebase@10.5.0/firestore"
-    }
-  }
-</script>
     
     <!-- 引入 Babel 编译器以在浏览器中运行 React JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.263.0?external=react",
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"
+      }
+    }
+    </script>
+    
     <style>
-        /* 隐藏滚动条但保留滚动功能 */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         body { margin: 0; background-color: #f3f4f6; }
@@ -41,7 +36,6 @@
 <body class="antialiased selection:bg-rose-200">
     <div id="root"></div>
 
-    <!-- 核心 React 代码开始 -->
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect } from 'react';
         import { createRoot } from 'react-dom/client';
@@ -51,26 +45,48 @@
           Send, User, Settings, Calendar, Pencil, Check, Lock, Key, Shield, List, ImagePlus
         } from 'lucide-react';
         
-        // ========================================================
-        // ⚠️ 第 1 步：配置云端数据库 (Firebase)
-        // 请将您在 Firebase 控制台获取的实际配置覆盖在下方的括号内
-        // ========================================================
-        const firebaseConfig = {
-  apiKey: "AIzaSyAqhGg_SsPokZK86MZ7O0X_B5EnDJxvhZw",
-  authDomain: "sticky-note-300e5.firebaseapp.com",
-  projectId: "sticky-note-300e5",
-  storageBucket: "sticky-note-300e5.firebasestorage.app",
-  messagingSenderId: "390722334999",
-  appId: "1:390722334999:web:33e3d8cbf8254bf64f0752",
-  measurementId: "G-YQ3FBJ5Z6R"
-};
-
-        const isFirebaseConfigured = Object.keys(firebaseConfig).length > 0;
-        
         import { initializeApp } from 'firebase/app';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
         import { getFirestore, collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 
+        // ========================================================
+        // 🚨 钢铁防御机制 1：全局错误捕获，防止白屏
+        // ========================================================
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center p-6 text-center">
+                            <Shield size={48} className="text-red-500 mb-4" />
+                            <h2 className="text-xl font-bold text-red-700 mb-2">哎呀，页面崩溃了</h2>
+                            <p className="text-sm text-red-500 mb-6">请截图下方错误发给技术支持：</p>
+                            <div className="bg-white p-4 rounded-xl shadow border border-red-200 text-left w-full overflow-auto text-xs text-gray-800 font-mono">
+                                {this.state.error && this.state.error.toString()}
+                            </div>
+                            <button onClick={() => window.location.reload()} className="mt-8 px-6 py-3 bg-red-500 text-white rounded-full font-bold shadow-lg">刷新重试</button>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        // ========================================================
+        // ⚠️ 请在此处填入您的真实 Firebase 配置！
+        // ========================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqhGg_SsPokZK86MZ7O0X_B5EnDJxvhZw",
+            authDomain: "sticky-note-300e5.firebaseapp.com",
+            projectId: "sticky-note-300e5",
+            storageBucket: "sticky-note-300e5.firebasestorage.app",
+            messagingSenderId: "390722334999",
+            appId: "1:390722334999:web:33e3d8cbf8254bf64f0752"
+        };
+
+        const isFirebaseConfigured = firebaseConfig.apiKey !== "您的API_KEY";
+        
         let app, auth, db;
         if (isFirebaseConfigured) {
             app = initializeApp(firebaseConfig);
@@ -81,21 +97,16 @@
         const formatYMD = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
         function App() {
-            // ============== 如果没有配置数据库，给小白一个友好的提示页面 ==============
+            // 🚨 钢铁防御机制 2：全局消息弹窗系统
+            const [toastMsg, setToastMsg] = useState('');
+            const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), 6000); };
+
             if (!isFirebaseConfigured) {
                 return (
                     <div className="min-h-[100dvh] flex flex-col items-center justify-center p-8 bg-gray-900 text-white text-center space-y-6">
                         <Shield size={64} className="text-rose-500 mb-4" />
-                        <h1 className="text-2xl font-bold">部署成功！只差最后一步</h1>
-                        <p className="text-gray-300 leading-relaxed text-sm">
-                            您的情侣小窝网页已经跑起来了。<br/>为了保证信息的**私密与云端同步**，您需要接入一个数据库。
-                        </p>
-                        <div className="bg-gray-800 p-4 rounded-xl text-left text-xs text-green-400 font-mono w-full break-all">
-                            1. 去 firebase.google.com 免费创建一个项目。<br/>
-                            2. 拿到您的 firebaseConfig 代码。<br/>
-                            3. 在 GitHub 找到 index.html 的第 47 行，把代码贴进去。<br/>
-                            4. 保存，Vercel 会自动更新，您的 App 就彻底活了！
-                        </div>
+                        <h1 className="text-2xl font-bold">代码运行成功！只差最后一步</h1>
+                        <p className="text-gray-300 leading-relaxed text-sm">请在 index.html 文件中填入真实的 Firebase 密钥。</p>
                     </div>
                 );
             }
@@ -104,19 +115,25 @@
             const [user, setUser] = useState(null);
             const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('couple_app_logged_in') === 'true');
             const [roomCode, setRoomCode] = useState(() => localStorage.getItem('couple_app_room_code') || '');
-            const [activeTab, setActiveTab] = useState('home');
             
             useEffect(() => {
                 const initAuth = async () => {
-                    try { await signInAnonymously(auth); } 
-                    catch(e) { console.error('鉴权初始化失败:', e); }
+                    try { 
+                        await signInAnonymously(auth); 
+                    } catch(e) { 
+                        console.error('鉴权初始化失败:', e); 
+                        showToast(`系统警告：身份验证失败！请确保您已在 Firebase 控制台开启了“匿名登录 (Anonymous)”功能！详细错误: ${e.message}`);
+                    }
                 };
-                initAuth();
-                const unsubscribe = onAuthStateChanged(auth, setUser);
+                if(isFirebaseConfigured) initAuth();
+                
+                let unsubscribe = () => {};
+                if(auth) unsubscribe = onAuthStateChanged(auth, setUser);
                 return () => unsubscribe();
             }, []);
 
-            // ============== 个人档案 ==============
+            // ============== 个人档案与主题 ==============
+            const [activeTab, setActiveTab] = useState('home');
             const [showProfileModal, setShowProfileModal] = useState(false);
             const [userProfile, setUserProfile] = useState(() => {
                 const saved = localStorage.getItem('couple_app_profile');
@@ -125,8 +142,8 @@
             const [editProfile, setEditProfile] = useState({...userProfile});
 
             const themeColors = {
-                female: { text: 'text-rose-500', bg: 'bg-rose-500', bgSoft: 'bg-rose-50', gradient: 'from-rose-400 to-pink-500', borderHeart: 'border-rose-400', tagBg: 'bg-rose-100 text-rose-600' },
-                male: { text: 'text-blue-500', bg: 'bg-blue-500', bgSoft: 'bg-blue-50', gradient: 'from-blue-400 to-cyan-500', borderHeart: 'border-blue-400', tagBg: 'bg-blue-100 text-blue-600' }
+                female: { text: 'text-rose-500', bg: 'bg-rose-500', bgHover: 'hover:bg-rose-600', bgLight: 'bg-rose-100', bgSoft: 'bg-rose-50', gradient: 'from-rose-400 to-pink-500', borderHeart: 'border-rose-400', tagBg: 'bg-rose-100 text-rose-600' },
+                male: { text: 'text-blue-500', bg: 'bg-blue-500', bgHover: 'hover:bg-blue-600', bgLight: 'bg-blue-100', bgSoft: 'bg-blue-50', gradient: 'from-blue-400 to-cyan-500', borderHeart: 'border-blue-400', tagBg: 'bg-blue-100 text-blue-600' }
             };
             const c = themeColors[userProfile.gender] || themeColors.female;
 
@@ -142,16 +159,20 @@
             const getCol = (name) => collection(db, 'artifacts', 'private-couple-app', 'public', 'data', `${name}_${roomCode}`);
             
             useEffect(() => {
-                if (!user || !isLoggedIn || !roomCode) return;
-                const unsubMsgs = onSnapshot(getCol('messages'), (snap) => {
-                    setMessages(snap.docs.map(d => ({ _docId: d.id, ...d.data() })).sort((a,b) => b.id - a.id));
-                });
-                const unsubPlans = onSnapshot(getCol('plans'), (snap) => {
-                    setPlans(snap.docs.map(d => ({ _docId: d.id, ...d.data() })).sort((a,b) => b.id - a.id));
-                });
-                const unsubAnniv = onSnapshot(getCol('anniversaries'), (snap) => {
-                    setAnniversaries(snap.docs.map(d => ({ _docId: d.id, ...d.data() })));
-                });
+                if (!user || !isLoggedIn || !roomCode || !db) return;
+                
+                const unsubMsgs = onSnapshot(getCol('messages'), 
+                    (snap) => setMessages(snap.docs.map(d => ({ _docId: d.id, ...d.data() })).sort((a,b) => b.id - a.id)),
+                    (error) => showToast(`读取纸条失败: ${error.message}。请检查您的 Firestore 安全规则是否已设为测试模式！`)
+                );
+                const unsubPlans = onSnapshot(getCol('plans'), 
+                    (snap) => setPlans(snap.docs.map(d => ({ _docId: d.id, ...d.data() })).sort((a,b) => b.id - a.id)),
+                    (error) => console.error(error)
+                );
+                const unsubAnniv = onSnapshot(getCol('anniversaries'), 
+                    (snap) => setAnniversaries(snap.docs.map(d => ({ _docId: d.id, ...d.data() }))),
+                    (error) => console.error(error)
+                );
                 return () => { unsubMsgs(); unsubPlans(); unsubAnniv(); };
             }, [user, isLoggedIn, roomCode]);
 
@@ -175,14 +196,14 @@
 
             const [showAddAnniversary, setShowAddAnniversary] = useState(false);
             const [newAnni, setNewAnni] = useState({ title: '', date: '' });
+            const [isSaving, setIsSaving] = useState(false);
 
-            // 监听数据刷新弹窗
             useEffect(() => { if (selectedNote) { const updated = messages.find(m => m.id === selectedNote.id); if (updated) setSelectedNote(updated); } }, [messages]);
             useEffect(() => { if (selectedPlan) { const updated = plans.find(p => p.id === selectedPlan.id); if (updated) setSelectedPlan(updated); } }, [plans]);
 
             const isMe = (role) => role === userProfile.gender;
 
-            // ============== 方法 ==============
+            // ============== 交互方法 ==============
             const handleLogin = () => {
                 setUserProfile(editProfile);
                 setIsLoggedIn(true);
@@ -205,38 +226,130 @@
 
             const handleSaveNewNote = async () => {
                 if (!newNoteText.trim() && showAddNoteModal === 'text' && !mediaPreview) return;
-                const now = new Date();
-                const bgColors = ['bg-yellow-100', 'bg-orange-50', 'bg-emerald-50', 'bg-blue-50', 'bg-rose-50'];
                 
-                const newMsg = {
-                    id: Date.now(),
-                    type: showAddNoteModal,
-                    text: newNoteText || (showAddNoteModal === 'photo' ? '分享了一张照片 📷' : '分享了一段视频 🎥'),
-                    mediaUrl: mediaPreview || null,
-                    date: todayStr,
-                    time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    bg: bgColors[Math.floor(Math.random() * bgColors.length)],
-                    rotation: ['rotate-1', 'rotate-2', '-rotate-1', '-rotate-2'][Math.floor(Math.random() * 4)],
-                    creatorRole: userProfile.gender,
-                    replies: []
-                };
-                await setDoc(doc(getCol('messages'), newMsg.id.toString()), newMsg);
-                setShowAddNoteModal(null); setNewNoteText(""); setMediaPreview(null);
+                // 🚨 检查是否未鉴权
+                if (!user) {
+                    showToast("身份未验证，无法保存！请在 Firebase 后台开启 Authentication -> 匿名登录。");
+                    return;
+                }
+
+                // 🚨 检查图片大小 (Firebase 单条数据限制 1MB，我们限制为 800KB)
+                if (mediaPreview && mediaPreview.length > 800 * 1024) {
+                    showToast("⚠️ 上传的图片/视频太大了！请选择较小的文件（800KB 以内）。");
+                    return;
+                }
+
+                setIsSaving(true);
+                try {
+                    const now = new Date();
+                    const bgColors = ['bg-yellow-100', 'bg-orange-50', 'bg-emerald-50', 'bg-blue-50', 'bg-rose-50'];
+                    const newMsg = {
+                        id: Date.now(),
+                        type: showAddNoteModal,
+                        text: newNoteText || (showAddNoteModal === 'photo' ? '分享了一张照片 📷' : '分享了一段视频 🎥'),
+                        mediaUrl: mediaPreview || null,
+                        date: todayStr,
+                        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        bg: bgColors[Math.floor(Math.random() * bgColors.length)],
+                        rotation: ['rotate-1', 'rotate-2', '-rotate-1', '-rotate-2'][Math.floor(Math.random() * 4)],
+                        creatorRole: userProfile.gender,
+                        replies: []
+                    };
+                    await setDoc(doc(getCol('messages'), newMsg.id.toString()), newMsg);
+                    setShowAddNoteModal(null); setNewNoteText(""); setMediaPreview(null);
+                } catch (err) {
+                    showToast(`保存纸条失败: ${err.message}`);
+                    console.error("Save error:", err);
+                } finally {
+                    setIsSaving(false);
+                }
             };
 
             const handleReplyNote = async () => {
                 if (!replyText.trim() || !selectedNote) return;
-                const now = new Date();
-                const newReply = { creatorRole: userProfile.gender, text: replyText, time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-                await setDoc(doc(getCol('messages'), selectedNote._docId), { replies: [...(selectedNote.replies || []), newReply] }, { merge: true });
-                setReplyText("");
+                try {
+                    const now = new Date();
+                    const newReply = { creatorRole: userProfile.gender, text: replyText, time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                    await setDoc(doc(getCol('messages'), selectedNote._docId), { replies: [...(selectedNote.replies || []), newReply] }, { merge: true });
+                    setReplyText("");
+                } catch (err) {
+                    showToast(`回复失败: ${err.message}`);
+                }
+            };
+            
+            const togglePlanCompletion = async (id) => {
+                try {
+                    const plan = plans.find(p => p.id === id);
+                    if (!plan) return;
+                    const isNowCompleted = !plan.completed;
+                    await setDoc(doc(getCol('plans'), plan._docId), { completed: isNowCompleted, completedAt: isNowCompleted ? todayStr : null }, { merge: true });
+                } catch (err) {
+                    showToast(`打卡失败: ${err.message}`);
+                }
             };
 
-            // ============== UI 渲染部分 ==============
+            const handleSavePlan = async () => {
+                if (!newPlan.text.trim()) return;
+                setIsSaving(true);
+                try {
+                    const planToAdd = { ...newPlan, id: Date.now(), completed: false, images: [], createdAt: todayStr, completedAt: null, creatorRole: newPlan.creatorRole };
+                    await setDoc(doc(getCol('plans'), planToAdd.id.toString()), planToAdd);
+                    setShowAddPlanModal(false);
+                    setNewPlan({ text: '', type: 'small', creatorRole: userProfile.gender, deadline: '', details: '' });
+                } catch (err) {
+                    showToast(`新建计划失败: ${err.message}`);
+                } finally {
+                    setIsSaving(false);
+                }
+            };
 
+            const handleAddPlanImage = async () => {
+                if (!selectedPlan) return;
+                try {
+                    const newImages = [...(selectedPlan.images || []), `mock-new-${Date.now()}`];
+                    await setDoc(doc(getCol('plans'), selectedPlan._docId), { images: newImages }, { merge: true });
+                } catch (err) {
+                    showToast(`添加图片失败: ${err.message}`);
+                }
+            };
+
+            const handleSaveAnniversary = async () => {
+                if (!newAnni.title || !newAnni.date) return;
+                setIsSaving(true);
+                try {
+                    const anniData = { id: Date.now(), ...newAnni, type: 'love' };
+                    await setDoc(doc(getCol('anniversaries'), anniData.id.toString()), anniData);
+                    setShowAddAnniversary(false);
+                    setNewAnni({ title: '', date: '' });
+                } catch (err) {
+                    showToast(`添加纪念日失败: ${err.message}`);
+                } finally {
+                    setIsSaving(false);
+                }
+            };
+
+            const calculateDaysLeft = (targetDateStr) => {
+                const target = new Date(targetDateStr);
+                const today = new Date(todayStr);
+                if (target < today) target.setFullYear(today.getFullYear() + 1);
+                const diffTime = target - today;
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            };
+
+            const getDaysInMonth = (year, month) => {
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayOfWeek = new Date(year, month, 1).getDay(); 
+                const days = [];
+                for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
+                for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+                return days;
+            };
+
+            // ============== 门禁登录页 ==============
             if (!isLoggedIn) {
                 return (
-                    <div className="min-h-[100dvh] bg-[#FDFCF8] flex items-center justify-center p-4 relative overflow-hidden">
+                    <div className="min-h-[100dvh] bg-[#FDFCF8] flex items-center justify-center p-4 relative overflow-hidden font-sans">
+                        {toastMsg && <div className="absolute top-10 w-[90%] max-w-sm bg-gray-900 text-white p-4 rounded-xl shadow-2xl z-50 text-xs font-bold leading-relaxed">{toastMsg}</div>}
                         <div className="bg-white w-full max-w-[360px] rounded-[32px] shadow-2xl p-8 relative z-10 border border-gray-100">
                             <div className="flex justify-center mb-6"><div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center shadow-inner"><Shield size={32} className="text-gray-300" /></div></div>
                             <h1 className="text-2xl font-black text-gray-800 text-center mb-2">小窝门禁</h1>
@@ -261,33 +374,61 @@
                 );
             }
 
+            // ============== 主体页面 ==============
+            const dayMessages = messages.filter(m => m.date === selectedDate);
+            const todayMessages = messages.filter(m => m.date === todayStr);
+
             return (
-                <div className="min-h-[100dvh] sm:bg-gray-200 flex sm:items-center justify-center sm:p-4">
-                    <div className="w-full h-[100dvh] sm:h-[800px] sm:max-w-[390px] bg-white sm:rounded-[40px] shadow-2xl relative overflow-hidden">
-                        {/* 页面内容区 */}
+                <div className="min-h-[100dvh] sm:bg-gray-200 flex sm:items-center justify-center sm:p-4 font-sans relative">
+                    {/* 全局 Toast 错误提示条 */}
+                    {toastMsg && (
+                        <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl z-[999] w-[90%] max-w-sm text-xs font-bold leading-relaxed flex items-start">
+                            <span className="mr-3 text-lg">⚠️</span> 
+                            <div className="flex-1 pt-0.5">{toastMsg}</div>
+                            <button onClick={() => setToastMsg('')} className="ml-3 text-gray-400 hover:text-white"><X size={16}/></button>
+                        </div>
+                    )}
+
+                    <div className="w-full h-[100dvh] sm:h-[800px] sm:max-w-[390px] bg-white sm:rounded-[40px] shadow-2xl relative overflow-hidden sm:border-8 sm:border-gray-900">
                         <div className="h-full relative overflow-y-auto pb-24 scrollbar-hide">
-                            {/* --- 小纸条 --- */}
+                            
+                            {/* --- 页面 1：小纸条 --- */}
                             {activeTab === 'home' && (
                                 <div className="p-5">
                                     <div className="flex justify-between items-center mt-2 mb-6">
                                         <div><h1 className="text-2xl font-bold text-gray-800">小纸条</h1><p className="text-sm text-gray-500 mt-1">Hello {userProfile.nickname}</p></div>
-                                        <div onClick={() => setShowProfileModal(true)} className={`w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center ${c.text}`}><User size={20} /></div>
+                                        <div onClick={() => setShowProfileModal(true)} className={`w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center ${c.text} cursor-pointer`}><User size={20} /></div>
                                     </div>
-                                    <div onClick={() => setShowCalendarModal(true)} className={`bg-gradient-to-r ${c.gradient} rounded-2xl p-5 text-white mb-6 shadow-lg`}>
+                                    <div onClick={() => setShowCalendarModal(true)} className={`bg-gradient-to-r ${c.gradient} rounded-2xl p-5 text-white mb-6 shadow-lg cursor-pointer`}>
                                         <div className="flex items-center space-x-3"><Calendar size={24} /><div className="text-2xl font-black">{todayStr}</div></div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4 pb-12">
-                                        {messages.filter(m => m.date === todayStr).map((msg) => (
-                                            <div key={msg.id} onClick={() => setSelectedNote(msg)} className={`${msg.bg} p-4 rounded-xl shadow-sm transform ${msg.rotation} border border-black/5`}>
-                                                {msg.type === 'photo' && <div className="w-full h-20 bg-black/5 rounded-lg mb-2 overflow-hidden">{msg.mediaUrl ? <img src={msg.mediaUrl} className="w-full h-full object-cover"/> : <ImageIcon size={20} className="m-auto mt-6 text-gray-400"/>}</div>}
-                                                <p className="text-gray-800 text-sm leading-relaxed line-clamp-3">{msg.text}</p>
+                                    <div className="relative min-h-[300px]">
+                                        {todayMessages.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-48 opacity-50 mt-10">
+                                              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4"><MessageSquare size={28} className="text-gray-400" /></div>
+                                              <p className="text-sm font-bold text-gray-500">今天的客厅空空如也</p>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            <div className="grid grid-cols-2 gap-4 pb-12">
+                                                {todayMessages.map((msg) => (
+                                                    <div key={msg.id} onClick={() => setSelectedNote(msg)} className={`${msg.bg} p-4 rounded-xl shadow-sm transform ${msg.rotation} border border-black/5 cursor-pointer`}>
+                                                        {msg.type === 'photo' && <div className="w-full h-20 bg-black/5 rounded-lg mb-2 overflow-hidden">{msg.mediaUrl ? <img src={msg.mediaUrl} className="w-full h-full object-cover" alt="photo"/> : <ImageIcon size={20} className="m-auto mt-6 text-gray-400"/>}</div>}
+                                                        {msg.type === 'video' && <div className="w-full h-20 bg-black/5 rounded-lg mb-2 flex items-center justify-center relative overflow-hidden">{msg.mediaUrl ? <video src={msg.mediaUrl} className="w-full h-full object-cover"/> : <Video size={20} className="text-gray-400"/>}</div>}
+                                                        <p className="text-gray-800 text-sm font-medium leading-relaxed line-clamp-3">{msg.text}</p>
+                                                        <div className="flex justify-between items-center mt-3">
+                                                            <span className="text-[10px] text-gray-500/70 flex items-center">
+                                                                {(msg.replies && msg.replies.length > 0) && <span className="flex items-center"><MessageSquare size={10} className="mr-1"/>{msg.replies.length}</span>}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {/* --- 备忘录 --- */}
+                            {/* --- 页面 2：备忘录 --- */}
                             {activeTab === 'plan' && (
                                 <div className="p-5 bg-stone-50 min-h-full">
                                     <h1 className="text-2xl font-bold text-gray-800 mt-2 mb-6">备忘录</h1>
@@ -297,78 +438,331 @@
                                     </div>
                                     <div className="space-y-3">
                                         {plans.filter(p => p.type === planType && !p.completed).map(plan => (
-                                            <div key={plan.id} onClick={() => setSelectedPlan(plan)} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-3">
-                                                <button onClick={(e) => { e.stopPropagation(); setDoc(doc(getCol('plans'), plan._docId), { completed: true, completedAt: todayStr }, { merge: true }); }} className="mt-0.5"><Circle className="w-6 h-6 text-gray-300" /></button>
-                                                <div><p className="text-sm font-medium text-gray-800">{plan.text}</p></div>
+                                            <div key={plan.id} onClick={() => setSelectedPlan(plan)} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-3 cursor-pointer">
+                                                <button onClick={(e) => { e.stopPropagation(); togglePlanCompletion(plan.id); }} className="mt-0.5"><Circle className="w-6 h-6 text-gray-300" /></button>
+                                                <div className="flex-1"><p className="text-sm font-medium text-gray-800">{plan.text}</p><p className="text-[10px] mt-1 text-gray-400">{plan.deadline || '无期限'}</p></div>
                                             </div>
                                         ))}
-                                        <button onClick={() => setShowAddPlanModal(true)} className="w-full py-4 border-2 border-dashed border-gray-200 text-gray-500 rounded-2xl flex items-center justify-center font-medium text-sm"><Plus size={18} className="mr-2" />添加计划</button>
+                                        <button onClick={() => { setNewPlan({...newPlan, type: planType, creatorRole: userProfile.gender}); setShowAddPlanModal(true); }} className="w-full py-4 border-2 border-dashed border-gray-200 text-gray-500 rounded-2xl flex items-center justify-center font-medium text-sm"><Plus size={18} className="mr-2" />添加计划</button>
+                                        {plans.filter(p => p.type === planType && p.completed).map(plan => (
+                                            <div key={plan.id} onClick={() => setSelectedPlan(plan)} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-3 opacity-60 cursor-pointer">
+                                                <button onClick={(e) => { e.stopPropagation(); togglePlanCompletion(plan.id); }} className="mt-0.5"><CheckCircle className={`w-6 h-6 ${c.iconText}`} /></button>
+                                                <div className="flex-1"><p className="text-sm font-medium text-gray-800 line-through">{plan.text}</p></div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* --- 日记本 --- */}
+                            {/* --- 页面 3：日记本 --- */}
                             {activeTab === 'memory' && (
-                                <div className="bg-stone-100 min-h-full">
-                                    <div className="bg-white pt-8 pb-4 px-6 shadow-sm rounded-b-3xl"><h1 className="text-xl font-bold text-gray-800">日记本数据盘点</h1></div>
-                                    <div className="p-6">
-                                        <div className="bg-[#fcfaf5] p-6 rounded-sm shadow-sm border border-stone-200">
-                                            <h3 className="text-base font-bold text-center tracking-widest mb-6">{todayStr} 盘点</h3>
-                                            <div className="text-sm text-stone-600 space-y-4">
-                                                <p>今日收到纸条：<span className="font-bold text-rose-500">{messages.filter(m => m.date === todayStr).length}</span> 张</p>
-                                                <p>新增计划目标：<span className="font-bold text-blue-500">{plans.filter(p => p.createdAt === todayStr).length}</span> 个</p>
-                                                <p>打卡完成约定：<span className="font-bold text-emerald-500">{plans.filter(p => p.completedAt === todayStr).length}</span> 个</p>
+                                <div className="bg-stone-100 min-h-full flex flex-col">
+                                    <div className="bg-white pt-8 pb-3 shadow-sm z-10 rounded-b-3xl shrink-0">
+                                        <div className="flex justify-between items-center px-6 mb-2">
+                                            <h1 className="text-xl font-bold text-gray-800">日记本数据盘点</h1>
+                                            <div className="flex items-center bg-gray-50 rounded-full p-0.5">
+                                                <button onClick={() => setCurrentMonthView(new Date(currentMonthView.getFullYear(), currentMonthView.getMonth() - 1, 1))} className="p-1 text-gray-500"><ChevronLeft size={16}/></button>
+                                                <span className="px-2 text-xs font-bold text-gray-700 w-16 text-center">{currentMonthView.getMonth() + 1}月</span>
+                                                <button onClick={() => setCurrentMonthView(new Date(currentMonthView.getFullYear(), currentMonthView.getMonth() + 1, 1))} className="p-1 text-gray-500"><ChevronRight size={16}/></button>
                                             </div>
+                                        </div>
+                                        <div className="px-4">
+                                            <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-400 font-bold mb-1"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                                            <div className="grid grid-cols-7 gap-y-1 gap-x-1 text-center px-1">
+                                                {getDaysInMonth(currentMonthView.getFullYear(), currentMonthView.getMonth()).map((d, idx) => {
+                                                    if (!d) return <div key={`empty-${idx}`} className="h-7"></div>;
+                                                    const fDate = formatYMD(d);
+                                                    const isSelected = fDate === selectedDate;
+                                                    const hasRecord = messages.some(m => m.date === fDate) || plans.some(p => p.createdAt === fDate || p.completedAt === fDate);
+                                                    return (
+                                                        <button key={idx} onClick={() => setSelectedDate(fDate)} className={`relative h-8 w-full rounded-lg flex flex-col items-center justify-center ${isSelected ? 'bg-gray-900 text-white shadow-md' : 'text-gray-600'}`}>
+                                                            <span className="font-semibold text-xs">{d.getDate()}</span>
+                                                            {hasRecord && <Heart size={6} className={`absolute bottom-0.5 ${isSelected ? 'text-gray-300' : c.text} fill-current`} />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 p-5">
+                                        <div className="bg-[#fcfaf5] min-h-[300px] rounded-sm shadow-sm border border-stone-200 relative p-6">
+                                            <h3 className="text-base font-bold text-center tracking-widest mb-6">{selectedDate} 盘点</h3>
+                                            <div className="text-sm text-stone-600 space-y-4">
+                                                <p>今日纸条交流：<span className="font-bold text-rose-500">{dayMessages.length}</span> 张</p>
+                                                <p>新增计划目标：<span className="font-bold text-blue-500">{plans.filter(p => p.createdAt === selectedDate).length}</span> 个</p>
+                                                <p>打卡完成约定：<span className="font-bold text-emerald-500">{plans.filter(p => p.completedAt === selectedDate).length}</span> 个</p>
+                                            </div>
+                                            {dayMessages.length > 0 && (
+                                                <div className="mt-8 pt-4 border-t border-stone-200">
+                                                    <h4 className="text-xs font-bold text-stone-400 mb-3 flex items-center"><MessageSquare size={14} className="mr-1.5"/> 当日纸条档案</h4>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        {dayMessages.map(msg => (
+                                                            <div key={msg.id} onClick={() => setSelectedNote(msg)} className={`${msg.bg} p-3 rounded-xl shadow-sm flex flex-col cursor-pointer border border-black/5`}>
+                                                                <p className="text-gray-800 text-xs font-medium line-clamp-2">{msg.text}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* 底部导航 */}
-                        <div className="absolute bottom-0 w-full bg-white border-t border-gray-100 flex justify-around pb-8 pt-4 z-40">
+                        {/* 底部导航栏 */}
+                        <div className="absolute bottom-0 w-full bg-white border-t border-gray-100 flex justify-around pb-8 pt-4 z-40 shadow-lg">
                             <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center ${activeTab === 'home' ? c.text : 'text-gray-400'}`}><MessageSquare size={24} /><span className="text-[10px] mt-1">小纸条</span></button>
                             <button onClick={() => setActiveTab('plan')} className={`flex flex-col items-center ${activeTab === 'plan' ? c.text : 'text-gray-400'}`}><Map size={24} /><span className="text-[10px] mt-1">备忘录</span></button>
                             <button onClick={() => setActiveTab('memory')} className={`flex flex-col items-center ${activeTab === 'memory' ? c.text : 'text-gray-400'}`}><BookOpen size={24} /><span className="text-[10px] mt-1">日记本</span></button>
                         </div>
 
-                        {/* 小纸条发文悬浮键 */}
+                        {/* 发留言菜单悬浮键 */}
                         {activeTab === 'home' && (
-                            <>
-                                {showAddMenu && <div className="absolute inset-0 z-20" onClick={() => setShowAddMenu(false)}></div>}
+                            <div className="absolute bottom-24 right-6 z-50">
+                                {showAddMenu && <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)}></div>}
                                 {showAddMenu && (
-                                    <div className="absolute bottom-28 right-6 z-30 bg-white rounded-2xl shadow-xl w-32 overflow-hidden">
+                                    <div className="absolute bottom-16 right-0 z-50 bg-white rounded-2xl shadow-xl w-32 overflow-hidden border border-gray-100">
                                         <button onClick={() => { setShowAddMenu(false); setShowAddNoteModal('text'); }} className="w-full px-4 py-3 text-sm flex items-center border-b"><Type size={14} className="mr-2"/>文字</button>
                                         <button onClick={() => { setShowAddMenu(false); setShowAddNoteModal('photo'); }} className="w-full px-4 py-3 text-sm flex items-center border-b"><ImageIcon size={14} className="mr-2"/>照片</button>
+                                        <button onClick={() => { setShowAddMenu(false); setShowAddNoteModal('video'); }} className="w-full px-4 py-3 text-sm flex items-center"><Video size={14} className="mr-2"/>视频</button>
                                     </div>
                                 )}
-                                <button onClick={() => setShowAddMenu(!showAddMenu)} className="absolute bottom-24 right-6 w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center shadow-xl z-30"><Plus size={28} /></button>
-                            </>
+                                <button onClick={() => setShowAddMenu(!showAddMenu)} className="w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center shadow-xl relative z-50"><Plus size={28} /></button>
+                            </div>
                         )}
 
-                        {/* 全局弹窗区域: 新增纸条 */}
+                        {/* ================= 各种弹窗 ================= */}
+                        {/* 写纸条弹窗 */}
                         {showAddNoteModal && (
-                            <div className="absolute inset-0 z-[80] flex items-end bg-black/40 p-4">
-                                <div className="bg-white w-full rounded-3xl p-6">
-                                    <div className="flex justify-between mb-4"><h3 className="font-bold">新增留言</h3><button onClick={() => setShowAddNoteModal(null)}><X size={18}/></button></div>
-                                    {(showAddNoteModal === 'photo') && (
-                                        <label className="w-full h-32 bg-gray-50 rounded-xl mb-4 flex justify-center items-center cursor-pointer overflow-hidden border-2 border-dashed">
-                                            {mediaPreview ? <img src={mediaPreview} className="w-full h-full object-cover" /> : <span className="text-xs text-gray-400">点击调用相机/相册</span>}
-                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if(f){ const r = new FileReader(); r.onload=(ev)=>setMediaPreview(ev.target.result); r.readAsDataURL(f); } }} />
+                            <div className="absolute inset-0 z-[80] flex items-end bg-black/40 p-0 sm:p-4">
+                                <div className="bg-white w-full rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold flex items-center">
+                                            <span className="flex items-center">
+                                                {showAddNoteModal === 'text' && <Type size={18} className="mr-2 text-gray-400"/>}
+                                                {showAddNoteModal === 'photo' && <ImageIcon size={18} className="mr-2 text-emerald-400"/>}
+                                                {showAddNoteModal === 'video' && <Video size={18} className="mr-2 text-blue-400"/>}
+                                                写留言
+                                            </span>
+                                        </h3>
+                                        <button onClick={() => {setShowAddNoteModal(null); setMediaPreview(null); setNewNoteText('');}}><X size={18}/></button>
+                                    </div>
+                                    {(showAddNoteModal === 'photo' || showAddNoteModal === 'video') && (
+                                        <label className="w-full h-32 bg-gray-50 rounded-xl mb-4 flex justify-center items-center cursor-pointer overflow-hidden border-2 border-dashed relative">
+                                            {mediaPreview ? (
+                                                showAddNoteModal === 'photo' ? <img src={mediaPreview} className="w-full h-full object-cover" alt="preview" /> : <video src={mediaPreview} className="w-full h-full object-cover" controls />
+                                            ) : (
+                                                <div className="flex flex-col items-center">
+                                                    {showAddNoteModal === 'photo' ? <ImagePlus size={32} className="mb-2 text-gray-300"/> : <Video size={32} className="mb-2 text-gray-300"/>}
+                                                    <span className="text-xs text-gray-400">点击调用系统相机/相册</span>
+                                                </div>
+                                            )}
+                                            <input type="file" accept={showAddNoteModal === 'photo' ? "image/*" : "video/*"} className="hidden" onChange={(e) => { const f = e.target.files[0]; if(f){ const r = new FileReader(); r.onload=(ev)=>setMediaPreview(ev.target.result); r.readAsDataURL(f); } }} />
                                         </label>
                                     )}
-                                    <textarea value={newNoteText} onChange={e => setNewNoteText(e.target.value)} placeholder="写点什么..." className="w-full bg-gray-50 p-4 rounded-xl text-sm h-24 outline-none mb-4"/>
-                                    <button onClick={handleSaveNewNote} className={`w-full py-3.5 ${c.bg} text-white rounded-xl font-bold`}>扔到客厅</button>
+                                    <textarea value={newNoteText} onChange={e => setNewNoteText(e.target.value)} placeholder="想写点什么..." className="w-full bg-gray-50 p-4 rounded-xl text-sm h-24 outline-none mb-4"/>
+                                    <button onClick={handleSaveNewNote} disabled={isSaving || (!newNoteText.trim() && showAddNoteModal === 'text' && !mediaPreview)} className={`w-full py-3.5 ${c.bg} text-white rounded-xl font-bold disabled:opacity-50`}>
+                                        {isSaving ? '正在发送...' : '扔到客厅'}
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* 个人设置 */}
+                        {/* 添加计划弹窗 */}
+                        {showAddPlanModal && (
+                            <div className="absolute inset-0 z-[75] flex items-center justify-center bg-black/40 p-4">
+                                <div className="bg-white w-full rounded-3xl p-5 shadow-2xl">
+                                    <div className="flex justify-between items-center mb-5">
+                                        <h3 className="font-bold text-gray-800">{newPlan.type === 'small' ? '添加小计划' : '设立大目标'}</h3>
+                                        <button onClick={() => setShowAddPlanModal(false)}><X size={18} /></button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <input type="text" value={newPlan.text} onChange={e => setNewPlan({...newPlan, text: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-sm outline-none" placeholder="计划名称..." />
+                                        <input type="text" value={newPlan.deadline} onChange={e => setNewPlan({...newPlan, deadline: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-sm outline-none" placeholder="期限/区间 (如：本周末)" />
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => setNewPlan({...newPlan, creatorRole: userProfile.gender})} className={`flex-1 py-2 text-sm rounded-lg ${newPlan.creatorRole === userProfile.gender ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}>我发起</button>
+                                            <button onClick={() => setNewPlan({...newPlan, creatorRole: userProfile.gender === 'female' ? 'male' : 'female'})} className={`flex-1 py-2 text-sm rounded-lg ${newPlan.creatorRole !== userProfile.gender ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}>Ta发起</button>
+                                        </div>
+                                        <button onClick={handleSavePlan} disabled={isSaving || !newPlan.text.trim()} className={`w-full py-3.5 rounded-xl font-bold text-sm ${!newPlan.text.trim() ? 'bg-gray-200' : `${c.bg} text-white`}`}>
+                                            {isSaving ? '正在创建...' : '创建计划'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 计划详情弹窗 */}
+                        {selectedPlan && (
+                            <div className="absolute inset-0 z-[75] flex items-center justify-center bg-black/40 p-4">
+                                <div className="bg-white w-full rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90%]">
+                                    <div className="flex justify-between items-center mb-4">
+                                        {isEditingPlan ? (
+                                            <input type="text" value={editPlanData && editPlanData.text} onChange={e => setEditPlanData({...editPlanData, text: e.target.value})} className="font-bold text-gray-800 flex-1 mr-4 text-lg bg-gray-50 p-2 rounded-lg outline-none" />
+                                        ) : (
+                                            <h3 className="font-bold text-gray-800 flex-1 text-lg">{selectedPlan && selectedPlan.text}</h3>
+                                        )}
+                                        <div className="flex items-center space-x-2">
+                                            {isMe(selectedPlan.creatorRole) && !isEditingPlan && <button onClick={() => { setIsEditingPlan(true); setEditPlanData({...selectedPlan}); }} className="p-1.5 bg-gray-100 rounded-full text-gray-500"><Pencil size={16} /></button>}
+                                            {isEditingPlan && <button onClick={async () => { try{ await setDoc(doc(getCol('plans'), editPlanData._docId), editPlanData); setIsEditingPlan(false); } catch(err) { showToast("修改失败"); } }} className="p-1.5 bg-green-100 rounded-full text-green-600"><Check size={16} /></button>}
+                                            <button onClick={() => { setSelectedPlan(null); setIsEditingPlan(false); }} className="p-1.5 bg-gray-100 rounded-full text-gray-500"><X size={18} /></button>
+                                        </div>
+                                    </div>
+                                    <div className="overflow-y-auto flex-1 space-y-4">
+                                        <div>
+                                            <h4 className="text-xs font-bold text-gray-500 mb-2">详情攻略</h4>
+                                            {isEditingPlan ? (
+                                                <textarea value={editPlanData && editPlanData.details} onChange={e => setEditPlanData({...editPlanData, details: e.target.value})} className="w-full bg-gray-50 p-4 rounded-xl text-sm min-h-[80px] outline-none" />
+                                            ) : (
+                                                <div className="bg-gray-50 p-4 rounded-xl text-sm">{selectedPlan.details || '暂无详情记录...'}</div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-bold text-gray-500 mb-2">图文记录</h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {(selectedPlan.images || []).map((img, idx) => (<div key={idx} className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center"><ImageIcon className="text-gray-300 w-8 h-8" /></div>))}
+                                                <button onClick={handleAddPlanImage} className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400"><Plus size={24} className="mb-2" /><span className="text-[10px]">添加图片</span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-4 mt-2 border-t border-gray-100">
+                                        <button onClick={() => togglePlanCompletion(selectedPlan.id)} className={`w-full py-3.5 rounded-xl font-medium text-sm flex items-center justify-center ${selectedPlan.completed ? 'bg-gray-100 text-gray-500' : `${c.bg} text-white`}`}>
+                                            <CheckCircle size={18} className="mr-2" /> {selectedPlan.completed ? '取消打卡' : '标记为已完成'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 纸条详情弹窗 */}
+                        {selectedNote && (
+                            <div className="absolute inset-0 z-[70] flex items-center justify-center p-4 bg-black/40">
+                                <div className="bg-white w-full rounded-3xl p-5 flex flex-col max-h-[85%]">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-gray-800 flex items-center"><MessageSquare size={18} className="mr-2 text-amber-500" />纸条详情</h3>
+                                        <div className="flex items-center space-x-2">
+                                            {isMe(selectedNote.creatorRole) && !isEditingNote && <button onClick={() => { setIsEditingNote(true); setEditNoteText(selectedNote.text); }} className="p-1.5 bg-gray-100 rounded-full text-gray-500"><Pencil size={16} /></button>}
+                                            <button onClick={() => { setSelectedNote(null); setIsEditingNote(false); }} className="p-1.5 bg-gray-100 rounded-full text-gray-500"><X size={18} /></button>
+                                        </div>
+                                    </div>
+                                    <div className="overflow-y-auto flex-1 pb-4 scrollbar-hide">
+                                        <div className={`${selectedNote.bg} p-5 rounded-2xl shadow-sm mb-6 border border-black/5`}>
+                                            {selectedNote.type === 'photo' && <div className="w-full h-32 bg-black/5 rounded-xl mb-3 overflow-hidden">{selectedNote.mediaUrl ? <img src={selectedNote.mediaUrl} className="w-full h-full object-cover" alt="photo"/> : <ImageIcon size={30} className="m-auto mt-10 text-gray-500"/>}</div>}
+                                            {selectedNote.type === 'video' && <div className="w-full h-32 bg-black/5 rounded-xl mb-3 overflow-hidden">{selectedNote.mediaUrl ? <video src={selectedNote.mediaUrl} className="w-full h-full object-cover" controls/> : <Video size={30} className="m-auto mt-10 text-gray-500"/>}</div>}
+                                            
+                                            {isEditingNote ? (
+                                                <div className="flex flex-col items-end mt-2">
+                                                    <textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} className="w-full bg-white/60 p-3 rounded-lg text-sm outline-none" rows={3}/>
+                                                    <button onClick={async () => { try{ await setDoc(doc(getCol('messages'), selectedNote._docId), { text: editNoteText }, { merge: true }); setIsEditingNote(false); } catch(err) { showToast("修改失败"); } }} className={`mt-2 px-4 py-1.5 ${c.bg} text-white rounded-full text-xs flex items-center shadow-sm`}><Check size={14} className="mr-1" /> 保存</button>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-800 text-[15px] font-medium leading-relaxed">{selectedNote.text}</p>
+                                            )}
+                                            <p className="text-right text-xs text-gray-500 mt-4">{selectedNote.date} · {selectedNote.time}</p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-gray-400 px-1 border-b pb-2">回复记录</h4>
+                                            {(!selectedNote.replies || selectedNote.replies.length === 0) ? (
+                                                <p className="text-xs text-gray-400 px-1 italic">还没有回复，快去抢沙发吧~</p>
+                                            ) : (
+                                                (selectedNote.replies || []).map((reply, idx) => (
+                                                    <div key={idx} className="bg-gray-50/80 p-3 rounded-xl">
+                                                        <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-gray-600">{isMe(reply.creatorRole) ? userProfile.nickname : 'Ta'}</span><span className="text-[10px] text-gray-400">{reply.time}</span></div>
+                                                        <p className="text-sm text-gray-700">{reply.text}</p>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 flex items-center bg-gray-50 p-1.5 rounded-full border">
+                                        <input type="text" className="flex-1 bg-transparent px-4 py-2 text-sm outline-none" placeholder="回复..." value={replyText} onChange={e => setReplyText(e.target.value)} />
+                                        <button onClick={handleReplyNote} disabled={!replyText.trim()} className={`w-9 h-9 ${c.bg} text-white rounded-full flex items-center justify-center disabled:opacity-50`}><Send size={16} className="ml-0.5" /></button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 日历弹窗 */}
+                        {showCalendarModal && (
+                            <div className="absolute inset-0 z-[60] flex items-end justify-center bg-black/40">
+                                <div className="bg-white w-full h-[85%] rounded-t-3xl p-5 flex flex-col shadow-2xl">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-xl font-bold text-gray-800">日历与纪念日</h3>
+                                        <button onClick={() => setShowCalendarModal(false)} className="p-2 bg-gray-100 rounded-full"><X size={20} /></button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto pb-6 scrollbar-hide">
+                                        <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <span className="font-semibold text-gray-700">{currentMonthView.getFullYear()}年 {currentMonthView.getMonth() + 1}月</span>
+                                                <div className="flex space-x-2">
+                                                    <button onClick={handlePrevMonth} className="w-6 h-6 rounded bg-white shadow-sm flex items-center justify-center text-gray-500"><ChevronLeft size={14}/></button>
+                                                    <button onClick={handleNextMonth} className="w-6 h-6 rounded bg-white shadow-sm flex items-center justify-center text-gray-500"><ChevronRight size={14}/></button>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 font-medium mb-2"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                                            <div className="grid grid-cols-7 gap-1 text-center text-sm">
+                                                {getDaysInMonth(currentMonthView.getFullYear(), currentMonthView.getMonth()).map((d, idx) => {
+                                                    if (!d) return <div key={idx} className="p-2"></div>;
+                                                    const fDate = formatYMD(d);
+                                                    const isToday = fDate === todayStr;
+                                                    return (<div key={idx} className={`p-2 rounded-lg ${isToday ? `${c.bg} text-white font-bold shadow-md` : 'text-gray-700'}`}>{d.getDate()}</div>)
+                                                })}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center mb-3 px-1">
+                                            <h4 className="font-semibold text-gray-700 text-sm flex items-center"><Heart size={16} className={`mr-2 ${c.text}`} />即将到来</h4>
+                                            <button onClick={() => setShowAddAnniversary(true)} className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-sm border border-gray-100">
+                                                <Plus size={14} className={c.text} strokeWidth={3} />
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {anniversaries.map(anni => (
+                                                <div key={anni.id} className={`bg-gradient-to-r ${c.bgSoft} to-white p-4 rounded-xl flex justify-between items-center border ${c.borderHeart}`}>
+                                                    <div><div className={`font-semibold ${c.text} text-sm`}>{anni.title}</div><div className="text-xs text-gray-400 mt-0.5">{anni.date}</div></div>
+                                                    <div className="text-right"><div className="text-xs text-gray-500">还有</div><div className={`text-xl font-bold ${c.text}`}>{calculateDaysLeft(anni.date)}<span className="text-xs font-normal ml-0.5">天</span></div></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加纪念日弹窗 */}
+                        {showAddAnniversary && (
+                            <div className="absolute inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
+                                <div className="bg-white w-full rounded-3xl p-5 shadow-2xl">
+                                    <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-gray-800">添加纪念日</h3><button onClick={() => setShowAddAnniversary(false)} className="p-1 bg-gray-100 rounded-full"><X size={16}/></button></div>
+                                    <div className="space-y-4">
+                                        <div><label className="text-xs text-gray-500 mb-1 block">什么日子？</label><input type="text" value={newAnni.title} onChange={e => setNewAnni({...newAnni, title: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-sm outline-none"/></div>
+                                        <div><label className="text-xs text-gray-500 mb-1 block">日期</label><input type="date" value={newAnni.date} onChange={e => setNewAnni({...newAnni, date: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-sm outline-none"/></div>
+                                        <button onClick={handleSaveAnniversary} disabled={isSaving} className={`w-full py-3 ${c.bg} text-white rounded-xl font-medium text-sm mt-2`}>
+                                            {isSaving ? '正在保存...' : '保存'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 个人设置弹窗 */}
                         {showProfileModal && (
-                            <div className="absolute inset-0 z-[80] flex items-end bg-black/40 p-4">
-                                <div className="bg-white w-full rounded-3xl p-6">
-                                    <div className="flex justify-between mb-6"><h3 className="font-bold">账户与偏好</h3><button onClick={() => setShowProfileModal(false)}><X size={18}/></button></div>
-                                    <button onClick={handleLogout} className="w-full py-3.5 bg-gray-100 text-gray-500 rounded-xl font-medium text-sm">退出当前小窝</button>
+                            <div className="absolute inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
+                                <div className="bg-white w-full rounded-3xl p-6 shadow-2xl">
+                                    <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-gray-800 flex items-center text-lg"><Settings size={20} className="mr-2 text-gray-600" />账户与偏好</h3><button onClick={() => setShowProfileModal(false)} className="p-1.5 bg-gray-100 rounded-full"><X size={18}/></button></div>
+                                    <div className="space-y-5">
+                                        <div><label className="text-xs font-semibold text-gray-500 mb-2 block">我的昵称</label><input type="text" value={editProfile.nickname} onChange={e => setEditProfile({...editProfile, nickname: e.target.value})} className="w-full bg-gray-50 p-3 rounded-xl text-sm outline-none"/></div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-gray-500 mb-2 block">性别 (切换主题色)</label>
+                                            <div className="flex space-x-3">
+                                                <button onClick={() => setEditProfile({...editProfile, gender: 'male'})} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 ${editProfile.gender === 'male' ? 'border-blue-500 text-blue-500 bg-blue-50' : 'border-gray-100 text-gray-400 bg-white'}`}>男生</button>
+                                                <button onClick={() => setEditProfile({...editProfile, gender: 'female'})} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 ${editProfile.gender === 'female' ? 'border-rose-500 text-rose-500 bg-rose-50' : 'border-gray-100 text-gray-400 bg-white'}`}>女生</button>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2 space-y-3">
+                                            <button onClick={handleSaveProfile} className={`w-full py-3.5 ${editProfile.gender === 'male' ? 'bg-blue-500' : 'bg-rose-500'} text-white rounded-xl font-medium text-sm shadow-md`}>保存设置</button>
+                                            <button onClick={handleLogout} className="w-full py-3.5 bg-gray-100 text-gray-500 hover:bg-gray-200 rounded-xl font-medium text-sm">退出当前小窝</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -378,7 +772,7 @@
         }
 
         const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
 </body>
 </html>
